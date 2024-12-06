@@ -2,17 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Bot,
-  Copy,
-  RefreshCw,
-  RotateCcw,
-  Send,
-  ThumbsDown,
-  ThumbsUp,
-  UploadCloud,
-  User
-} from "lucide-react";
+import { Bot, Copy, RefreshCw, RotateCcw, Send, ThumbsDown, ThumbsUp, UploadCloud, User } from "lucide-react";
 
 const ProjectChat = () => {
   return (
@@ -32,8 +22,8 @@ const ProjectChat = () => {
                   <div className="flex-1">
                     <p className="mb-1 text-sm text-muted-foreground">AI Assistant</p>
                     <div className="prose prose-sm">
-                      Hello! I'm ready to help you with your project. You can ask me questions about your documents or
-                      request specific analyses.
+                      Hello! I&apos;m ready to help you with your project. You can ask me questions about your documents
+                      or request specific analyses.
                     </div>
                   </div>
                 </div>
@@ -68,7 +58,7 @@ const ProjectChat = () => {
                   <div className="flex-1">
                     <p className="mb-1 text-sm text-muted-foreground">You</p>
                     <div className="prose prose-sm">
-                      Can you analyze the main points from the documents I've uploaded?
+                      Can you analyze the main points from the documents I&apos;ve uploaded?
                     </div>
                   </div>
                 </div>

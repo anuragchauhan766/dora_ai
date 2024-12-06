@@ -1,9 +1,6 @@
 import { Command } from "lucide-react";
 import * as React from "react";
 
-import { NavMain } from "@/components/nav-main";
-import { NavSecondary } from "@/components/nav-secondary";
-
 import {
   Sidebar,
   SidebarContent,
@@ -15,13 +12,8 @@ import {
 } from "@/components/ui/sidebar";
 
 import Link from "next/link";
-import { NavProjectSection } from "./siderbar/NavbarProjectSection";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function AppSidebar({
-  ...props
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-}: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({ children, ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -40,11 +32,7 @@ export function AppSidebar({
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-      <SidebarContent>
-        <NavMain />
-        <NavProjectSection />
-        <NavSecondary className="mt-auto" />
-      </SidebarContent>
+      <SidebarContent>{children}</SidebarContent>
       <SidebarRail />
     </Sidebar>
   );

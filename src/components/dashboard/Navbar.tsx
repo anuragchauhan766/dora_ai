@@ -58,8 +58,6 @@ export function DashboardNavbar() {
                 userButtonAvatarBox: "size-6",
               },
             }}
-            
-
           />
         </div>
       </div>

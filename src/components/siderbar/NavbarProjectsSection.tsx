@@ -6,7 +6,7 @@ import { Suspense } from "react";
 import { NavProjects } from "./NavProjects";
 import { NavProjectsSkeleton } from "./SidebarSkeleton";
 
-export async function NavProjectSection() {
+export async function NavProjectsSection() {
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel className="flex items-center justify-between">Projects</SidebarGroupLabel>

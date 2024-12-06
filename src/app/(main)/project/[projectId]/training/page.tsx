@@ -150,7 +150,7 @@ const ProjectTraining = () => {
 };
 
 // Helper Components
-const StatusBadge = ({ status }) => {
+const StatusBadge = ({ status }: { status: "completed" | "processing" | "failed" }) => {
   const styles = {
     completed: "bg-green-100 text-green-700",
     processing: "bg-yellow-100 text-yellow-700",
