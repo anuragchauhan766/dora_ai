@@ -20,7 +20,7 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
   }, [initialData, searchQuery]);
 
   return (
-    <div className="container mx-auto p-4 pt-8">
+    <div className="container mx-auto h-full p-4">
       <h1 className="mb-6 text-3xl font-bold">Your Knowledgebases</h1>
       <div className="mb-6 flex items-center justify-between">
         <div className="relative w-64">
