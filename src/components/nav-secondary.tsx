@@ -7,19 +7,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { LifeBuoy, Send } from "lucide-react";
-const navSecondary = [
-  {
-    title: "Support",
-    url: "#",
-    icon: LifeBuoy,
-  },
-  {
-    title: "Feedback",
-    url: "#",
-    icon: Send,
-  },
-];
+import { navSecondary } from "@/data/sidebar";
+
 export function NavSecondary({ ...props }: React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
   return (
     <SidebarGroup {...props}>

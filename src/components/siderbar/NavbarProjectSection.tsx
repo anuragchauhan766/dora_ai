@@ -1,18 +1,12 @@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Plus } from "lucide-react";
 
-import { getProject } from "@/actions/project/getProject";
 import { SidebarGroup, SidebarGroupAction, SidebarGroupContent, SidebarGroupLabel } from "@/components/ui/sidebar";
 import { Suspense } from "react";
 import { NavProjects } from "./NavProjects";
 import { NavProjectsSkeleton } from "./SidebarSkeleton";
 
 export async function NavProjectSection() {
-  const projects = await getProject();
-
-  if (!projects.success) {
-    return null;
-  }
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel className="flex items-center justify-between">Projects</SidebarGroupLabel>

@@ -2,7 +2,7 @@ export interface NavMainItems {
     title: string;
     url: string;
     isActive?: boolean;
-    icon: React.ReactNode
+    icon: React.FC
     items?: {
         title: string;
         url: string;
