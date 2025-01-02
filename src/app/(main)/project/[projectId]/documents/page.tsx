@@ -1,28 +1,26 @@
-import React from "react";
+import { UploadDocuments } from "@/components/dashboard/UploadDocuments";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  UploadCloud,
-  File,
-  Link,
-  Search,
-  FileText,
-  FileJson,
-  Globe,
-  Trash2,
-  Download,
-  ExternalLink,
-  MoreVertical,
-} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Download,
+  ExternalLink,
+  File,
+  FileJson,
+  FileText,
+  Globe,
+  MoreVertical,
+  Search,
+  Trash2
+} from "lucide-react";
 
 const ProjectDocuments = () => {
   return (
@@ -30,22 +28,13 @@ const ProjectDocuments = () => {
       {/* Header Actions - Stacked on mobile */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap gap-2">
-          <Button className="flex-1 items-center gap-2 sm:flex-none">
-            <UploadCloud className="h-4 w-4" />
-            <span className="hidden sm:inline">Upload Files</span>
-            <span className="sm:hidden">Upload</span>
-          </Button>
-          <Button variant="outline" className="flex-1 items-center gap-2 sm:flex-none">
-            <Link className="h-4 w-4" />
-            <span className="hidden sm:inline">Add URL</span>
-            <span className="sm:hidden">URL</span>
-          </Button>
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
             <Input placeholder="Search..." className="w-full pl-9" />
           </div>
         </div>
       </div>
+      <UploadDocuments />
 
       {/* Document Management Tabs - Scrollable on mobile */}
       <Tabs defaultValue="all" className="space-y-4">
@@ -154,6 +143,7 @@ const ProjectDocuments = () => {
 };
 
 // Helper Components
+// @ts-expect-error StatusBadge is not defined we will fix this later
 const StatusBadge = ({ status }) => (
   <span
     className={`inline-flex items-center rounded-full px-2 py-1 text-xs ${

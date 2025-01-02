@@ -22,6 +22,20 @@
       "when": 1733046033120,
       "tag": "0002_added-description-in-project",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1735747726261,
+      "tag": "0003_nappy_silhouette",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1735748771406,
+      "tag": "0004_wise_pepper_potts",
+      "breakpoints": true
     }
   ]
 }

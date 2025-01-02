@@ -1,5 +1,17 @@
 // db/schema.ts
-import { pgTable, text, timestamp, integer, uuid, varchar, boolean, pgEnum } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  timestamp,
+  integer,
+  uuid,
+  varchar,
+  boolean,
+  pgEnum,
+  vector,
+  index,
+  jsonb,
+} from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
 const timestamps = {
@@ -40,20 +52,50 @@ export const projects = pgTable("projects", {
   ...timestamps,
 });
 
-// Documents table
-export const documents = pgTable("documents", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  name: varchar("name", { length: 255 }).notNull(),
-  type: varchar("type", { length: 50 }).notNull(),
-  content: text("content").notNull(),
+export const documentStatus = pgEnum("status", ["pending", "processing", "completed", "failed"]);
 
-  fileSize: integer("file_size").notNull(),
-  fileUrl: text("file_url").notNull(),
-  projectId: uuid("project_id")
-    .references(() => projects.id, { onDelete: "cascade" })
-    .notNull(),
-  ...timestamps,
-});
+export const documentType = pgEnum("type", ["link", "pdf", "txt", "csv", "json"]);
+
+// Documents table
+export const documents = pgTable(
+  "documents",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    name: varchar("name", { length: 255 }).notNull(),
+    type: documentType("type").notNull(),
+    content: text("content").notNull(),
+    status: documentStatus().default("pending"),
+    fileSize: integer("file_size").notNull(),
+    url: text("url").notNull(),
+    metadata: jsonb("metadata"),
+    projectId: uuid("project_id")
+      .references(() => projects.id, { onDelete: "cascade" })
+      .notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    index("status_idx").on(table.status),
+    index("type_idx").on(table.type),
+    index("project_id_idx").on(table.projectId),
+  ]
+);
+
+export const embeddings = pgTable(
+  "embeddings",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    documentId: uuid("document_id")
+      .references(() => documents.id, { onDelete: "cascade" })
+      .notNull(),
+    content: text("content").notNull(),
+    embedding: vector("embedding", { dimensions: 1536 }),
+    chunkIndex: integer("chunk_index").notNull(),
+    metadata: jsonb("metadata"),
+    model: varchar("model", { length: 100 }),
+    ...timestamps,
+  },
+  (table) => [index("embeddingIndex").using("hnsw", table.embedding.op("vector_cosine_ops"))]
+);
 
 // Chats table
 export const chats = pgTable("chats", {
@@ -112,4 +154,12 @@ export const messagesRelations = relations(messages, ({ one }) => ({
     fields: [messages.chatId],
     references: [chats.id],
   }),
+}));
+
+export const documentsRelations = relations(documents, ({ one, many }) => ({
+  project: one(projects, {
+    fields: [documents.projectId],
+    references: [projects.id],
+  }),
+  embeddings: many(embeddings),
 }));

@@ -35,7 +35,7 @@ export function KnowledgeBaseCard({ data }: KnowledgeBaseCardProps) {
       </CardContent>
       <CardFooter className="flex justify-between">
         <Button variant="outline" asChild>
-          <Link href={`/dashboard/${data.id}`}>View</Link>
+          <Link href={`/project/${data.id}`}>View</Link>
         </Button>
         <Button variant="destructive" onClick={handleDelete}>
           <Trash2 className="mr-2 h-4 w-4" /> Delete

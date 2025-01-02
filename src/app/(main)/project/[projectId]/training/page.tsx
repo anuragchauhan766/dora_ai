@@ -111,7 +111,7 @@ const ProjectTraining = () => {
                   <TableRow key={i}>
                     <TableCell className="font-medium">{item.name}</TableCell>
                     <TableCell>
-                      <StatusBadge status={item.status} />
+                      <StatusBadge status={item.status as "processing" | "completed" | "failed"} />
                     </TableCell>
                     <TableCell className="hidden md:table-cell">{item.processedAt}</TableCell>
                     <TableCell className="hidden md:table-cell">{item.duration}</TableCell>
@@ -137,7 +137,7 @@ const ProjectTraining = () => {
                   </Button>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <StatusBadge status={item.status} />
+                  <StatusBadge status={item.status as "processing" | "completed" | "failed"} />
                   <span className="text-muted-foreground">{item.processedAt}</span>
                 </div>
               </div>
