@@ -104,8 +104,7 @@ export const chats = pgTable("chats", {
   id: uuid("id").defaultRandom().primaryKey(),
 
   userId: text("user_id")
-    .references(() => users.id, { onDelete: "cascade" })
-    .notNull(),
+    .references(() => users.id, { onDelete: "cascade" }),
   projectId: uuid("project_id")
     .references(() => projects.id, { onDelete: "cascade" })
     .notNull(),

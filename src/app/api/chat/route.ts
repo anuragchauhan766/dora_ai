@@ -1,7 +1,12 @@
 import { env } from "@/config/env/server";
+import { db } from "@/db/database";
+import { messages } from "@/db/schema";
+import { chats } from "@/db/schema";
 import { findRelevantContent } from "@/lib/ai";
+import { systemPrompt } from "@/lib/prompt";
 import { createAzure } from "@ai-sdk/azure";
-import { streamText, tool } from "ai";
+import { auth } from "@clerk/nextjs/server";
+import { Message, streamText, TextPart, tool } from "ai";
 import { z } from "zod";
 
 // Allow streaming responses up to 30 seconds
@@ -13,12 +18,41 @@ const azure = createAzure({
 
 });
 export async function POST(req: Request) {
-  const { messages } = await req.json(); 
+  const { messages: conversations, id, projectId, lastAiMessageId }: { messages: Message[]; id: string, projectId: string, lastAiMessageId: string } = await req.json();
 
+  const { userId } = await auth();
   const result = streamText({
-    // @ts-expect-error - TODO: fix this
     model: azure(env.AZURE_OPENAI_API_DEPLOYMENT_NAME),
-    messages,
+    system: systemPrompt(),
+    messages: conversations,
+    maxSteps: 10,
+    onFinish: async ({ response }) => {
+      await db.insert(chats).values({
+        id,
+        projectId: projectId,
+        userId: userId,
+      }).onConflictDoNothing({ target: chats.id });
+      await db.insert(messages).values({
+        id: conversations[conversations.length - 1].id,
+        content: conversations[conversations.length - 1].content,
+        role: "user",
+        chatId: id,
+      }).onConflictDoNothing({ target: messages.id })
+      await db.insert(messages).values({
+        id: lastAiMessageId || response.messages[response.messages.length - 1].id,
+        content:
+          (response.messages[response.messages.length - 1].content[0] as TextPart).text,
+        role: "assistant",
+        chatId: id,
+      }).onConflictDoUpdate({
+        target: messages.id,
+        set: {
+          content: (response.messages[response.messages.length - 1].content[0] as TextPart).text,
+        },
+      });
+
+    },
+    experimental_generateMessageId: () => crypto.randomUUID().toString(),
     tools: {
 
       getInformation: tool({

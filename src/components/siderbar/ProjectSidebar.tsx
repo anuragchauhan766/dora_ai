@@ -1,5 +1,5 @@
 "use client";
-import { Binary, FileText, History, LayoutDashboard, MessageSquare, MoreHorizontal, Settings } from "lucide-react";
+import { FileText, History, LayoutDashboard, MessageSquare, MoreHorizontal, Settings } from "lucide-react";
 
 import {
   SidebarGroup,
@@ -23,7 +23,6 @@ const projectNavItems: NavMainItems[] = [
   { title: "Chat", url: "/chat", icon: MessageSquare },
   { title: "Conversation History", url: "/conversation", icon: History },
   { title: "Documents", url: "/documents", icon: FileText },
-  { title: "Training", url: "/training", icon: Binary },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
 export function NavProjectSection({ project }: NavProjectSectionProps) {
