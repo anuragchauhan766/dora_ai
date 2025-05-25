@@ -67,7 +67,9 @@ export const documents = pgTable(
     status: documentStatus().default("pending"),
     fileSize: integer("file_size").notNull(),
     url: text("url").notNull(),
+    mimeType: varchar("mime_type", { length: 100 }),
     metadata: jsonb("metadata"),
+    errorMessage: text("error_message"),
     projectId: uuid("project_id")
       .references(() => projects.id, { onDelete: "cascade" })
       .notNull(),

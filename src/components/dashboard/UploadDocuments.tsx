@@ -10,6 +10,7 @@ import { toast } from "react-toastify";
 import { cn } from "@/lib/utils";
 import { handleURL } from "@/actions/ai/handleURL";
 import { useParams } from "next/navigation";
+import { handleFile } from "@/actions/ai/handleFile";
 
 export function UploadDocuments() {
   const { projectId } = useParams();
@@ -19,12 +20,9 @@ export function UploadDocuments() {
   const handleURLSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
-    console.debug("handleURLSubmit");
+
     const formData = new FormData(e.currentTarget);
-    const url = formData.get("url") as string;
-    const name = formData.get("name") as string;
-  
-    console.log(url, name);
+
     try {
       const result = await handleURL(formData);
       if (result.success) {
@@ -49,14 +47,16 @@ export function UploadDocuments() {
     Array.from(e.target.files).forEach((file) => {
       formData.append("files", file);
     });
+    formData.append("projectId", projectId as string);
 
     try {
-      //   const result = await uploadFilesAction(formData);
-      //   if (result.success) {
-      //     toast.success(result.message);
-      //   } else {
-      //     toast.error("Failed to upload files");
-      //   }
+      const result = await handleFile(formData);
+      if (result.success) {
+        toast.success("Files added for processing");
+        e.target.value = ""; // Reset file input
+      } else {
+        toast.error(result.error || "Failed to upload files");
+      }
     } catch (error) {
       console.error(error);
       toast.error("Failed to upload files");
