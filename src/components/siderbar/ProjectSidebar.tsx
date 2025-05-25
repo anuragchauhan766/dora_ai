@@ -1,5 +1,5 @@
 "use client";
-import { FileText, History, LayoutDashboard, MessageSquare, MoreHorizontal, Settings } from "lucide-react";
+import { FileText, History, LayoutDashboard, MessageSquare, Settings } from "lucide-react";
 
 import {
   SidebarGroup,
@@ -53,12 +53,6 @@ export function NavProjectSection({ project }: NavProjectSectionProps) {
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
-          <SidebarMenuItem>
-            <SidebarMenuButton>
-              <MoreHorizontal />
-              <span>More</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>

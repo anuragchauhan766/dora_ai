@@ -29,7 +29,7 @@ async function ProjectLayout({
         <AppSidebar>
           <NavMain />
           {project && <NavProjectSection project={project} />}
-          <RecentChatsSection />
+          <RecentChatsSection projectId={projectId} />
           <NavSecondary className="mt-auto" />
         </AppSidebar>
         <SidebarInset>

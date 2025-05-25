@@ -1,8 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,32 +8,84 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Search,
-  Calendar,
-  Filter,
-  MoreVertical,
-  Star,
-  Share2,
-  Trash2,
-  MessageSquare,
-  Download,
-  FileText,
-  ArrowUpDown,
-} from "lucide-react";
-import { format } from "date-fns";
+import { Calendar, MoreVertical, MessageSquare, FileText, Trash2 } from "lucide-react";
+import { format, formatDistanceToNow } from "date-fns";
+import { db } from "@/db/database";
+import { chats, messages } from "@/db/schema";
+import { desc, eq, sql } from "drizzle-orm";
+import Link from "next/link";
+import { ConversationSearch } from "./conversation-search";
 
-const ConversationHistory = () => {
+async function getChatStats(projectId: string) {
+  const totalChats = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(chats)
+    .where(eq(chats.projectId, projectId));
+
+  const thisMonthChats = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(chats)
+    .where(sql`${chats.projectId} = ${projectId} AND ${chats.createdAt} >= date_trunc('month', CURRENT_DATE)`);
+
+  return {
+    total: totalChats[0].count,
+    thisMonth: thisMonthChats[0].count,
+  };
+}
+
+async function getChats(projectId: string, searchQuery?: string) {
+  const projectChats = await db.query.chats.findMany({
+    where: searchQuery
+      ? sql`${chats.projectId} = ${projectId} AND EXISTS (
+          SELECT 1 FROM ${messages} m
+          WHERE m.chat_id = ${chats.id} 
+          AND m.content ILIKE ${`%${searchQuery}%`}
+        )`
+      : eq(chats.projectId, projectId),
+    with: {
+      messages: {
+        orderBy: [desc(messages.createdAt)],
+        limit: 1,
+      },
+    },
+    orderBy: [desc(chats.updatedAt)],
+  });
+
+  return projectChats.map((chat) => {
+    const lastMessage = chat.messages[0]?.content || "New Chat";
+    const firstLine = lastMessage.split("\n")[0];
+    const truncatedTitle = firstLine.length > 50 ? firstLine.substring(0, 50) + "..." : firstLine;
+
+    return {
+      id: chat.id,
+      title: truncatedTitle,
+      messages: chat.messages.length,
+      created: chat.createdAt,
+      lastActive: formatDistanceToNow(chat.updatedAt, { addSuffix: true }),
+    };
+  });
+}
+
+export default async function ConversationHistory({
+  params,
+  searchParams,
+}: {
+  params: { projectId: string };
+  searchParams: { q?: string };
+}) {
+  const stats = await getChatStats(params.projectId);
+  const conversations = await getChats(params.projectId, searchParams.q);
+
   return (
     <div className="space-y-6 p-4">
       {/* Header with Stats */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Chats</p>
-                <p className="text-2xl font-bold">256</p>
+                <p className="text-2xl font-bold">{stats.total}</p>
               </div>
               <MessageSquare className="h-8 w-8 text-muted-foreground" />
             </div>
@@ -46,70 +96,16 @@ const ConversationHistory = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">This Month</p>
-                <p className="text-2xl font-bold">45</p>
+                <p className="text-2xl font-bold">{stats.thisMonth}</p>
               </div>
               <Calendar className="h-8 w-8 text-muted-foreground" />
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Shared</p>
-                <p className="text-2xl font-bold">12</p>
-              </div>
-              <Share2 className="h-8 w-8 text-muted-foreground" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Starred</p>
-                <p className="text-2xl font-bold">8</p>
-              </div>
-              <Star className="h-8 w-8 text-muted-foreground" />
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
-      {/* Search and Filters */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
-        <div className="relative md:col-span-6">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 transform text-muted-foreground" />
-          <Input placeholder="Search conversations..." className="pl-10" />
-        </div>
-        <div className="flex flex-wrap gap-2 md:col-span-6">
-          <Select>
-            <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Time Range" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="today">Today</SelectItem>
-              <SelectItem value="week">This Week</SelectItem>
-              <SelectItem value="month">This Month</SelectItem>
-              <SelectItem value="all">All Time</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select>
-            <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="shared">Shared</SelectItem>
-              <SelectItem value="starred">Starred</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="outline" className="flex-grow md:flex-grow-0">
-            <Filter className="mr-2 h-4 w-4" />
-            More Filters
-          </Button>
-        </div>
-      </div>
+      {/* Search */}
+      <ConversationSearch projectId={params.projectId} />
 
       {/* Conversations List */}
       <Card>
@@ -119,11 +115,7 @@ const ConversationHistory = () => {
             <table className="w-full">
               <thead>
                 <tr className="border-b">
-                  <th className="p-4 text-left font-medium">
-                    <Button variant="ghost" className="flex items-center gap-1">
-                      Title <ArrowUpDown className="h-4 w-4" />
-                    </Button>
-                  </th>
+                  <th className="p-4 text-left font-medium">Title</th>
                   <th className="p-4 text-left font-medium">Messages</th>
                   <th className="p-4 text-left font-medium">Created</th>
                   <th className="p-4 text-left font-medium">Last Active</th>
@@ -134,16 +126,18 @@ const ConversationHistory = () => {
                 {conversations.map((conv) => (
                   <tr key={conv.id} className="border-b hover:bg-muted/50">
                     <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        {conv.starred && <Star className="h-4 w-4 text-yellow-500" />}
+                      <Link
+                        href={`/project/${params.projectId}/chat/${conv.id}`}
+                        className="flex items-center gap-2 hover:underline"
+                      >
                         <span className="font-medium">{conv.title}</span>
-                      </div>
+                      </Link>
                     </td>
                     <td className="p-4">{conv.messages}</td>
                     <td className="p-4">{format(conv.created, "MMM d, yyyy")}</td>
                     <td className="p-4">{conv.lastActive}</td>
                     <td className="p-4 text-right">
-                      <ConversationActions />
+                      <ConversationActions chatId={conv.id} projectId={params.projectId} />
                     </td>
                   </tr>
                 ))}
@@ -156,11 +150,13 @@ const ConversationHistory = () => {
             {conversations.map((conv) => (
               <div key={conv.id} className="space-y-2 p-4">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    {conv.starred && <Star className="h-4 w-4 text-yellow-500" />}
+                  <Link
+                    href={`/project/${params.projectId}/chat/${conv.id}`}
+                    className="flex items-center gap-2 hover:underline"
+                  >
                     <span className="font-medium">{conv.title}</span>
-                  </div>
-                  <ConversationActions />
+                  </Link>
+                  <ConversationActions chatId={conv.id} projectId={params.projectId} />
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
                   <div>Messages: {conv.messages}</div>
@@ -174,10 +170,10 @@ const ConversationHistory = () => {
       </Card>
     </div>
   );
-};
+}
 
 // Conversation Actions Component
-const ConversationActions = () => (
+const ConversationActions = ({ chatId, projectId }: { chatId: string; projectId: string }) => (
   <DropdownMenu>
     <DropdownMenuTrigger asChild>
       <Button variant="ghost" size="icon">
@@ -185,17 +181,10 @@ const ConversationActions = () => (
       </Button>
     </DropdownMenuTrigger>
     <DropdownMenuContent align="end">
-      <DropdownMenuItem>
-        <Star className="mr-2 h-4 w-4" /> Star
-      </DropdownMenuItem>
-      <DropdownMenuItem>
-        <Share2 className="mr-2 h-4 w-4" /> Share
-      </DropdownMenuItem>
-      <DropdownMenuItem>
-        <Download className="mr-2 h-4 w-4" /> Export
-      </DropdownMenuItem>
-      <DropdownMenuItem>
-        <FileText className="mr-2 h-4 w-4" /> View
+      <DropdownMenuItem asChild>
+        <Link href={`/project/${projectId}/chat/${chatId}`}>
+          <FileText className="mr-2 h-4 w-4" /> View
+        </Link>
       </DropdownMenuItem>
       <DropdownMenuSeparator />
       <DropdownMenuItem className="text-destructive">
@@ -204,26 +193,3 @@ const ConversationActions = () => (
     </DropdownMenuContent>
   </DropdownMenu>
 );
-
-// Sample data
-const conversations = [
-  {
-    id: 1,
-    title: "Product Requirements Discussion",
-    messages: 45,
-    created: new Date("2024-12-01"),
-    lastActive: "2 hours ago",
-    starred: true,
-  },
-  {
-    id: 2,
-    title: "User Research Analysis",
-    messages: 28,
-    created: new Date("2024-12-03"),
-    lastActive: "1 day ago",
-    starred: false,
-  },
-  // Add more conversations...
-];
-
-export default ConversationHistory;
