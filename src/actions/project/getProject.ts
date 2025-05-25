@@ -8,6 +8,7 @@ import { and, eq, getTableColumns, sql } from "drizzle-orm";
 export async function getProjects() {
   try {
     const { userId } = await auth();
+    console.log(userId);
     if (!userId) {
       throw new UnauthorizedError("Please Sign In to create a project");
     }

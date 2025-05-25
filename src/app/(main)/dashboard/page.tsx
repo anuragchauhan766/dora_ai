@@ -3,6 +3,7 @@ import { DashboardClient } from "@/components/dashboard/Dashboard";
 
 export default async function Dashboard() {
   const projects = await getProjects();
+  console.log(projects);
   if (!projects) {
     return null;
   }

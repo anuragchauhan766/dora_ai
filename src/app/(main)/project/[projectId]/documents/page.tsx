@@ -1,203 +1,88 @@
 import { UploadDocuments } from "@/components/dashboard/UploadDocuments";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Download,
-  ExternalLink,
-  File,
-  FileJson,
-  FileText,
-  Globe,
-  MoreVertical,
-  Search,
-  Trash2
-} from "lucide-react";
+import { db } from "@/db/database";
+import { documents as documentsTable } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { File, FileJson, FileText, Globe } from "lucide-react";
+import { DataTable } from "@/components/ui/data-table";
+import { columns, type Document } from "@/components/dashboard/documents/columns";
 
-const ProjectDocuments = () => {
+const statusOptions = [
+  { label: "Pending", value: "pending" },
+  { label: "Processing", value: "processing" },
+  { label: "Completed", value: "completed" },
+  { label: "Failed", value: "failed" },
+];
+
+const typeOptions = [
+  { label: "PDF", value: "pdf" },
+  { label: "Link", value: "link" },
+  { label: "Text", value: "txt" },
+  { label: "CSV", value: "csv" },
+  { label: "JSON", value: "json" },
+];
+
+const ProjectDocuments = async ({ params }: { params: Promise<{ projectId: string }> }) => {
+  const { projectId } = await params;
+  const docs = await db.query.documents.findMany({
+    where: eq(documentsTable.projectId, projectId),
+  });
+
+  const documents: Document[] = docs.map((doc) => ({
+    id: doc.id,
+    name: doc.name,
+    type: doc.type,
+    fileSize: doc.fileSize,
+    createdAt: doc.createdAt,
+    status: doc.status,
+  }));
+
   return (
     <div className="space-y-4 p-2 sm:space-y-6 sm:p-6">
-      {/* Header Actions - Stacked on mobile */}
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-wrap gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
-            <Input placeholder="Search..." className="w-full pl-9" />
-          </div>
-        </div>
-      </div>
       <UploadDocuments />
 
-      {/* Document Management Tabs - Scrollable on mobile */}
-      <Tabs defaultValue="all" className="space-y-4">
-        <div className="overflow-auto">
-          <TabsList className="inline-flex min-w-full sm:min-w-0">
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="files">Files</TabsTrigger>
-            <TabsTrigger value="urls">URLs</TabsTrigger>
-            <TabsTrigger value="processed">Processed</TabsTrigger>
-          </TabsList>
-        </div>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-4">
+        {[
+          { icon: FileText, title: "Total", count: docs.length },
+          { icon: File, title: "PDFs", count: docs.filter((doc) => doc.type === "pdf").length },
+          { icon: Globe, title: "Links", count: docs.filter((doc) => doc.type === "link").length },
+          {
+            icon: FileJson,
+            title: "Other",
+            count: docs.filter((doc) => !["pdf", "link"].includes(doc.type)).length,
+          },
+        ].map((stat, i) => (
+          <Card key={i}>
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2">
+                <stat.icon className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="text-xs font-medium sm:text-sm">{stat.title}</p>
+                  <p className="text-lg font-bold sm:text-2xl">{stat.count}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
-        <TabsContent value="all" className="space-y-4">
-          {/* Stats Cards - Grid layout adjusts by screen size */}
-          <div className="grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-4">
-            {[
-              { icon: FileText, title: "Total", count: 24 },
-              { icon: File, title: "PDFs", count: 12 },
-              { icon: Globe, title: "URLs", count: 8 },
-              { icon: FileJson, title: "Other", count: 4 },
-            ].map((stat, i) => (
-              <Card key={i}>
-                <CardContent className="p-3 sm:p-4">
-                  <div className="flex items-center gap-2">
-                    <stat.icon className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="text-xs font-medium sm:text-sm">{stat.title}</p>
-                      <p className="text-lg font-bold sm:text-2xl">{stat.count}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* Documents List - Table on desktop, Cards on mobile */}
-          <div className="hidden sm:block">
-            <Card>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead className="hidden md:table-cell">Size</TableHead>
-                      <TableHead className="hidden md:table-cell">Added</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {documents.map((doc, i) => (
-                      <TableRow key={i}>
-                        <TableCell className="font-medium">
-                          <div className="flex items-center gap-2">
-                            <File className="h-4 w-4" />
-                            {doc.name}
-                          </div>
-                        </TableCell>
-                        <TableCell>{doc.type}</TableCell>
-                        <TableCell className="hidden md:table-cell">{doc.size}</TableCell>
-                        <TableCell className="hidden md:table-cell">{doc.added}</TableCell>
-                        <TableCell>
-                          <StatusBadge status={doc.status} />
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <DocumentActions />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Mobile Document Cards */}
-          <div className="space-y-2 sm:hidden">
-            {documents.map((doc, i) => (
-              <Card key={i}>
-                <CardContent className="p-3">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <File className="h-4 w-4" />
-                        <span className="font-medium">{doc.name}</span>
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {doc.type} • {doc.size}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <StatusBadge status={doc.status} />
-                        <span className="text-xs text-muted-foreground">{doc.added}</span>
-                      </div>
-                    </div>
-                    <DocumentActions />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-      </Tabs>
+      {/* Documents Table */}
+      <Card>
+        <CardContent className="p-4">
+          <DataTable
+            columns={columns}
+            data={documents}
+            filterColumn="name"
+            filterOptions={{
+              status: statusOptions,
+              type: typeOptions,
+            }}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 };
-
-// Helper Components
-// @ts-expect-error StatusBadge is not defined we will fix this later
-const StatusBadge = ({ status }) => (
-  <span
-    className={`inline-flex items-center rounded-full px-2 py-1 text-xs ${
-      status === "Processed" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
-    }`}
-  >
-    {status}
-  </span>
-);
-
-const DocumentActions = () => (
-  <DropdownMenu>
-    <DropdownMenuTrigger asChild>
-      <Button variant="ghost" size="sm">
-        <MoreVertical className="h-4 w-4" />
-      </Button>
-    </DropdownMenuTrigger>
-    <DropdownMenuContent align="end">
-      <DropdownMenuItem>
-        <Download className="mr-2 h-4 w-4" /> Download
-      </DropdownMenuItem>
-      <DropdownMenuItem>
-        <ExternalLink className="mr-2 h-4 w-4" /> View
-      </DropdownMenuItem>
-      <DropdownMenuItem className="text-destructive">
-        <Trash2 className="mr-2 h-4 w-4" /> Delete
-      </DropdownMenuItem>
-    </DropdownMenuContent>
-  </DropdownMenu>
-);
-
-// Sample data
-const documents = [
-  {
-    name: "Product Specs.pdf",
-    type: "PDF",
-    size: "2.4 MB",
-    added: "2h ago",
-    status: "Processed",
-  },
-  {
-    name: "Research Notes.txt",
-    type: "Text",
-    size: "145 KB",
-    added: "5h ago",
-    status: "Processed",
-  },
-  {
-    name: "https://example.com/docs",
-    type: "URL",
-    size: "-",
-    added: "1d ago",
-    status: "Processing",
-  },
-];
 
 export default ProjectDocuments;

@@ -1,29 +1,33 @@
 "use server";
 
-import { documents, embeddings } from "@/db/schema";
-import { revalidatePath } from "next/cache";
-import { z } from "zod";
-import { PlaywrightWebBaseLoader } from "@langchain/community/document_loaders/web/playwright";
-import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
-import { AzureOpenAIEmbeddings } from "@langchain/openai";
-import { chromium } from "playwright";
-import { eq } from "drizzle-orm";
 import { db } from "@/db/database";
+import { documents, embeddings } from "@/db/schema";
 
+import { AzureOpenAIEmbeddings } from "@langchain/openai";
+import { eq } from "drizzle-orm";
+import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
+import { revalidatePath } from "next/cache";
+import { chromium } from "playwright";
+import { z } from "zod";
+import "@mendable/firecrawl-js";
+import { FireCrawlLoader } from "@langchain/community/document_loaders/web/firecrawl";
+import { env } from "@/config/env/server";
 const urlSchema = z.object({
   url: z.string().url(),
   projectId: z.string().uuid(),
+  name: z.string().optional(),
 });
 
-export async function handleURL(data: FormData | { url: string; projectId: string }) {
+export async function handleURL(data: FormData | { url: string; projectId: string, name: string }) {
   try {
     // Parse and validate input
-    const { url, projectId } = urlSchema.parse(
+    const { url, projectId, name } = urlSchema.parse(
       data instanceof FormData
         ? {
-            url: data.get("url"),
-            projectId: data.get("projectId"),
-          }
+          url: data.get("url"),
+          projectId: data.get("projectId"),
+          name: data.get("name"),
+        }
         : data
     );
 
@@ -31,7 +35,7 @@ export async function handleURL(data: FormData | { url: string; projectId: strin
     const [document] = await db
       .insert(documents)
       .values({
-        name: new URL(url).hostname,
+        name: name || url,
         type: "link",
         content: "",
         url,
@@ -44,7 +48,7 @@ export async function handleURL(data: FormData | { url: string; projectId: strin
     processDocument(document.id).catch(console.error);
 
     revalidatePath(`/${projectId}`);
-    return { success: true, documentId: document.id };
+    return { success: true, documentId: document.id, message: "URL added For Training" };
   } catch (error) {
     console.error("Error handling URL:", error);
     return {
@@ -61,62 +65,80 @@ async function processDocument(documentId: string) {
 
   try {
     // Get document
-    const document = await db.query.documents.findFirst({
+    const urlDoc = await db.query.documents.findFirst({
       where: eq(documents.id, documentId),
     });
 
-    if (!document?.url) throw new Error("Document not found");
+    if (!urlDoc?.url) throw new Error("Document not found");
 
     // Update status
-    await db.update(documents).set({ status: "processing" }).where(eq(documents.id, documentId));
+    await db.update(documents).set({ status: "processing", }).where(eq(documents.id, documentId));
 
     // Load content
-    const loader = new PlaywrightWebBaseLoader(document.url, {
-      launchOptions: {
-        headless: true,
-      },
-      gotoOptions: {
-        waitUntil: "networkidle",
-        timeout: 60000,
+    const loader = new FireCrawlLoader({
+      url: urlDoc.url, // The URL to scrape
+      apiKey: env.FIRECRAWL_API_KEY, // Optional, defaults to `FIRECRAWL_API_KEY` in your env.
+      mode: "scrape", // The mode to run the crawler in. Can be "scrape" for single urls or "crawl" for all accessible subpages
+      params: {
+        // optional parameters based on Firecrawl API docs
+        // For API documentation, visit https://docs.firecrawl.dev
       },
     });
 
-    const [doc] = await loader.load();
-    const content = doc.pageContent;
+    const docs = await loader.load();
+
+
 
     // Split content
     const splitter = new RecursiveCharacterTextSplitter({
       chunkSize: 1000,
       chunkOverlap: 200,
     });
-    const chunks = await splitter.splitText(content);
+    const chunks = await splitter.splitDocuments(docs);
 
     // Generate embeddings
-    const embedder = new AzureOpenAIEmbeddings();
-
+    const embedder = new AzureOpenAIEmbeddings({
+      azureOpenAIApiKey: env.AZURE_API_KEY,
+      azureOpenAIApiInstanceName: env.AZURE_RESOURCE_NAME,
+      azureOpenAIApiDeploymentName: env.AZURE_OPENAI_API_EMBEDDINGS_DEPLOYMENT_NAME,
+      azureOpenAIApiVersion: env.AZURE_OPENAI_API_VERSION,
+    });
+    const fullContent = docs.map((doc) => doc.pageContent).join("\n\n");
+    const fileSize = Buffer.byteLength(fullContent, 'utf8');
     // Save everything
     await db.transaction(async (tx) => {
       await tx
         .update(documents)
         .set({
-          content,
+          content: fullContent,
           status: "completed",
-          fileSize: content.length,
+          fileSize: fileSize,
+          metadata: {
+            ...docs[0].metadata,
+          }
         })
         .where(eq(documents.id, documentId));
+      const batchSize = 100;
+      for (let i = 0; i < chunks.length; i += batchSize) {
+        const batch = chunks.slice(i, i + batchSize);
+        const batchContents = batch.map(chunk => chunk.pageContent);
+        const generatedEmbeddings = await embedder.embedDocuments(batchContents);
 
-      for (let i = 0; i < chunks.length; i++) {
-        const chunk = chunks[i];
-        const [embedding] = await embedder.embedDocuments([chunk]);
+        await Promise.all(
+          batch.map((chunk, index) =>
+            tx.insert(embeddings).values({
+              documentId,
+              content: chunk.pageContent,
+              embedding: generatedEmbeddings[index],
+              chunkIndex: i + index,
+              model: "text-embedding-ada-002",
+              metadata: chunk.metadata,
 
-        await tx.insert(embeddings).values({
-          documentId,
-          content: chunk,
-          embedding,
-          chunkIndex: i,
-          model: "text-embedding-ada-002",
-        });
+            })
+          )
+        );
       }
+      console.log("Embeddings saved");
     });
   } catch (error) {
     await db.update(documents).set({ status: "failed" }).where(eq(documents.id, documentId));

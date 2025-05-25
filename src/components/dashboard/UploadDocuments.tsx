@@ -8,28 +8,31 @@ import { Label } from "@/components/ui/label";
 import { UploadCloud, Link as LinkIcon } from "lucide-react";
 import { toast } from "react-toastify";
 import { cn } from "@/lib/utils";
-
+import { handleURL } from "@/actions/ai/handleURL";
+import { useParams } from "next/navigation";
 
 export function UploadDocuments() {
+  const { projectId } = useParams();
   const [urlMode, setUrlMode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleURLSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
-
+    console.debug("handleURLSubmit");
     const formData = new FormData(e.currentTarget);
     const url = formData.get("url") as string;
     const name = formData.get("name") as string;
+  
     console.log(url, name);
     try {
-    //   const result = await addURLAction({ url, name });
-    //   if (result.success) {
-    //     toast.success(result.message);
-    //     (e.target as HTMLFormElement).reset();
-    //   } else {
-    //     toast.error(result.message);
-    //   }
+      const result = await handleURL(formData);
+      if (result.success) {
+        toast.success(result.message);
+        (e.target as HTMLFormElement).reset();
+      } else {
+        toast.error(result.message);
+      }
     } catch (error) {
       console.error(error);
       toast.error("Failed to add URL");
@@ -48,12 +51,12 @@ export function UploadDocuments() {
     });
 
     try {
-    //   const result = await uploadFilesAction(formData);
-    //   if (result.success) {
-    //     toast.success(result.message);
-    //   } else {
-    //     toast.error("Failed to upload files");
-    //   }
+      //   const result = await uploadFilesAction(formData);
+      //   if (result.success) {
+      //     toast.success(result.message);
+      //   } else {
+      //     toast.error("Failed to upload files");
+      //   }
     } catch (error) {
       console.error(error);
       toast.error("Failed to upload files");
@@ -87,6 +90,7 @@ export function UploadDocuments() {
                 <Label htmlFor="name">Display Name (Optional)</Label>
                 <Input id="name" name="name" type="text" placeholder="My Document" />
               </div>
+              <Input id="projectId" name="projectId" type="hidden" value={projectId} />
               <Button type="submit" disabled={isSubmitting} className="w-full">
                 {isSubmitting ? "Adding..." : "Add URL"}
               </Button>
