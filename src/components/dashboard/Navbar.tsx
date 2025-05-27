@@ -9,7 +9,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navigation = [
-  { name: "Overview", href: "/dashboard" },
   { name: "Documents", href: "/dashboard/documents" },
   { name: "Activity", href: "/dashboard/activity" },
   { name: "Usage", href: "/dashboard/usage" },
@@ -19,7 +18,6 @@ const navigation = [
 
 export function DashboardNavbar() {
   const pathname = usePathname();
-  console.log(pathname.split("/"));
 
   return (
     <div className="border-b bg-background">

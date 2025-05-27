@@ -43,6 +43,13 @@
       "when": 1748189917721,
       "tag": "0005_sparkling_echo",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1748319676491,
+      "tag": "0006_narrow_whiplash",
+      "breakpoints": true
     }
   ]
 }

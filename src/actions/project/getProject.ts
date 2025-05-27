@@ -8,21 +8,19 @@ import { and, eq, getTableColumns, sql } from "drizzle-orm";
 export async function getProjects() {
   try {
     const { userId } = await auth();
-    console.log(userId);
+
     if (!userId) {
       throw new UnauthorizedError("Please Sign In to create a project");
     }
     const data = await db
       .select({
         ...getTableColumns(projects),
-        documentCounts: sql<number>`(
-                    SELECT COUNT(*)::int 
-                    FROM ${documents} 
-                    WHERE ${documents.projectId} = ${projects.id}
-                )`,
+        documentCounts: sql<number>`COUNT(${documents.id})::int`,
       })
       .from(projects)
-      .where(eq(projects.userId, userId));
+      .leftJoin(documents, eq(documents.projectId, projects.id))
+      .where(eq(projects.userId, userId))
+      .groupBy(projects.id);
     return data;
   } catch (error) {
     console.error(error);
@@ -39,14 +37,12 @@ export async function getProject(projectId: string) {
     const data = await db
       .select({
         ...getTableColumns(projects),
-        documentCounts: sql<number>`(
-                    SELECT COUNT(*)::int 
-                    FROM ${documents} 
-                    WHERE ${documents.projectId} = ${projects.id}
-                )`,
+        documentCounts: sql<number>`COUNT(${documents.id})::int`,
       })
       .from(projects)
-      .where(and(eq(projects.userId, userId), eq(projects.id, projectId)));
+      .leftJoin(documents, eq(documents.projectId, projects.id))
+      .where(and(eq(projects.userId, userId), eq(projects.id, projectId)))
+      .groupBy(projects.id);
     return data[0];
   } catch (error) {
     console.error(error);

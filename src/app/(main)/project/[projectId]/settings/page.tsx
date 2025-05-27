@@ -1,23 +1,204 @@
+"use client";
+
+import { deleteProject } from "@/actions/project/deleteProject";
+import { getProject } from "@/actions/project/getProject";
+import { updateProject } from "@/actions/project/updateProject";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { Copy, RefreshCw, Trash2, Users } from "lucide-react";
+import { Copy, RefreshCw, Save, Trash2, Users } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
+import { ProjectWithDocCount } from "@/types/project";
 
-const ProjectSettings = () => {
+const SettingsSkeleton = () => {
   return (
     <div className="space-y-4 p-2 sm:space-y-6 sm:p-6">
-      {/* Settings Navigation */}
       <Tabs defaultValue="general" className="space-y-4">
         <div className="overflow-auto">
           <TabsList className="inline-flex min-w-full sm:min-w-0">
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="ai">AI Settings</TabsTrigger>
-            <TabsTrigger value="api">API</TabsTrigger>
-            <TabsTrigger value="team">Team</TabsTrigger>
+            <TabsTrigger value="danger" className="text-destructive">
+              Danger Zone
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value="general">
+          <Card>
+            <CardHeader>
+              <CardTitle>Project Information</CardTitle>
+              <CardDescription>Basic settings for your project</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-32 w-full" />
+              </div>
+              <div className="flex justify-end">
+                <Skeleton className="h-10 w-32" />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="ai">
+          <Card>
+            <CardHeader>
+              <CardTitle>AI Configuration</CardTitle>
+              <CardDescription>Configure AI behavior and responses</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-32 w-full" />
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 w-48" />
+                  </div>
+                  <Skeleton className="h-10 w-20" />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 w-48" />
+                  </div>
+                  <Skeleton className="h-10 w-20" />
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <Skeleton className="h-10 w-32" />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="danger">
+          <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="text-destructive">Danger Zone</CardTitle>
+              <CardDescription>Irreversible actions for your project</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-4">
+                <div className="space-y-2 rounded-lg border border-destructive/50 p-4">
+                  <Skeleton className="h-6 w-32" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-10 w-40" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+const ProjectSettings = () => {
+  const params = useParams();
+  const router = useRouter();
+  const [project, setProject] = useState<ProjectWithDocCount | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [generalChanges, setGeneralChanges] = useState<Partial<ProjectWithDocCount>>({});
+  const [aiChanges, setAiChanges] = useState<Partial<ProjectWithDocCount>>({});
+
+  useEffect(() => {
+    const fetchProject = async () => {
+      const data = await getProject(params.projectId as string);
+      if (data) {
+        setProject(data);
+      }
+      setLoading(false);
+    };
+    fetchProject();
+  }, [params.projectId]);
+
+  const handleGeneralChange = (field: keyof ProjectWithDocCount, value: string) => {
+    if (!project) return;
+    setGeneralChanges((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleAiChange = (field: keyof ProjectWithDocCount, value: string | number) => {
+    if (!project) return;
+    setAiChanges((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSaveGeneral = async () => {
+    if (!project || Object.keys(generalChanges).length === 0) return;
+    const res = await updateProject(project.id, generalChanges);
+    if (res.success && "data" in res) {
+      setProject({ ...res.data, documentCounts: project.documentCounts });
+      setGeneralChanges({});
+      toast.success("General settings updated successfully");
+    } else if (!res.success && "error" in res) {
+      toast.error(res.error.message);
+    }
+  };
+
+  const handleSaveAi = async () => {
+    if (!project || Object.keys(aiChanges).length === 0) return;
+    const res = await updateProject(project.id, aiChanges);
+    if (res.success && "data" in res) {
+      setProject({ ...res.data, documentCounts: project.documentCounts });
+      setAiChanges({});
+      toast.success("AI settings updated successfully");
+    } else if (!res.success && "error" in res) {
+      toast.error(res.error.message);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!project) return;
+    const res = await deleteProject(project.id);
+    if (res.success) {
+      toast.success("Project deleted successfully");
+      router.push("/dashboard");
+    } else if (!res.success && "error" in res) {
+      toast.error(res.error.message);
+    }
+  };
+
+  if (loading) {
+    return <SettingsSkeleton />;
+  }
+
+  if (!project) {
+    return (
+      <div className="flex h-[50vh] items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold">Project Not Found</h2>
+          <p className="mt-2 text-muted-foreground">
+            The project you&apos;re looking for doesn&apos;t exist or you don&apos;t have access to it.
+          </p>
+          <Button className="mt-4" onClick={() => router.push("/dashboard")}>
+            Return to Dashboard
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4 p-2 sm:space-y-6 sm:p-6">
+      <Tabs defaultValue="general" className="space-y-4">
+        <div className="overflow-auto">
+          <TabsList className="inline-flex min-w-full sm:min-w-0">
+            <TabsTrigger value="general">General</TabsTrigger>
+            <TabsTrigger value="ai">AI Settings</TabsTrigger>
             <TabsTrigger value="danger" className="text-destructive">
               Danger Zone
             </TabsTrigger>
@@ -34,18 +215,25 @@ const ProjectSettings = () => {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Project Name</label>
-                <Input placeholder="My AI Project" />
+                <Input
+                  placeholder="My AI Project"
+                  value={generalChanges.name ?? project.name}
+                  onChange={(e) => handleGeneralChange("name", e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Description</label>
-                <Textarea placeholder="Project description..." />
+                <Textarea
+                  placeholder="Project description..."
+                  value={generalChanges.description ?? project.description}
+                  onChange={(e) => handleGeneralChange("description", e.target.value)}
+                />
               </div>
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <label className="text-sm font-medium">Public Project</label>
-                  <p className="text-sm text-muted-foreground">Allow others to discover this project</p>
-                </div>
-                <Switch />
+              <div className="flex justify-end">
+                <Button onClick={handleSaveGeneral} disabled={Object.keys(generalChanges).length === 0}>
+                  <Save className="mr-2 h-4 w-4" />
+                  Save Changes
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -61,23 +249,47 @@ const ProjectSettings = () => {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">System Prompt</label>
-                <Textarea placeholder="You are an AI assistant helping with..." className="min-h-[100px]" />
+                <Textarea
+                  placeholder="You are an AI assistant helping with..."
+                  className="min-h-[100px]"
+                  value={aiChanges.systemPrompt ?? project.systemPrompt ?? ""}
+                  onChange={(e) => handleAiChange("systemPrompt", e.target.value)}
+                />
               </div>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <label className="text-sm font-medium">Temperature</label>
-                    <p className="text-sm text-muted-foreground">Controls randomness of responses</p>
+                    <p className="text-sm text-muted-foreground">Controls randomness of responses (0-10)</p>
                   </div>
-                  <Input type="number" className="w-20" placeholder="0.7" />
+                  <Input
+                    type="number"
+                    className="w-20"
+                    min={0}
+                    max={10}
+                    value={aiChanges.temperature ?? project.temperature ?? 7}
+                    onChange={(e) => handleAiChange("temperature", parseInt(e.target.value))}
+                  />
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <label className="text-sm font-medium">Max Tokens</label>
                     <p className="text-sm text-muted-foreground">Maximum length of responses</p>
                   </div>
-                  <Input type="number" className="w-20" placeholder="2000" />
+                  <Input
+                    type="number"
+                    className="w-20"
+                    min={1}
+                    value={aiChanges.maxTokens ?? project.maxTokens ?? 2000}
+                    onChange={(e) => handleAiChange("maxTokens", parseInt(e.target.value))}
+                  />
                 </div>
+              </div>
+              <div className="flex justify-end">
+                <Button onClick={handleSaveAi} disabled={Object.keys(aiChanges).length === 0}>
+                  <Save className="mr-2 h-4 w-4" />
+                  Save Changes
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -171,7 +383,7 @@ const ProjectSettings = () => {
                   <p className="text-sm text-muted-foreground">
                     This action cannot be undone. All data will be permanently deleted.
                   </p>
-                  <Button variant="destructive" className="mt-2">
+                  <Button variant="destructive" className="mt-2" onClick={handleDelete}>
                     <Trash2 className="mr-2 h-4 w-4" />
                     Delete Project
                   </Button>

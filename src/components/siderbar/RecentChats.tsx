@@ -1,4 +1,4 @@
-import { ArrowRight, MessageSquare, MoreHorizontal, Plus } from "lucide-react";
+import { ArrowRight, MessageSquare, MoreHorizontal, Plus, Share } from "lucide-react";
 
 import { SidebarMenu, SidebarMenuAction, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import Link from "next/link";
@@ -57,6 +57,14 @@ export async function RecentChats({ projectId }: RecentChatsProps) {
           <Link href={`/project/${projectId}/conversation`}>
             <ArrowRight />
             <span>View All</span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild>
+          <Link href={`/p/${projectId}/chat`}>
+            <Share />
+            <span>Share Project</span>
           </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>

@@ -6,7 +6,8 @@ import { chats, messages } from "@/db/schema";
 import { copyToClipboard } from "@/lib/chat";
 import { cn } from "@/lib/utils";
 import { useChat } from "@ai-sdk/react";
-import { Bot, Copy, RefreshCw, RotateCcw, Send, StopCircle, UploadCloud } from "lucide-react";
+import { Bot, Copy, RefreshCw, RotateCcw, Send, StopCircle } from "lucide-react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import type { Components } from "react-markdown";
 import ReactMarkdown from "react-markdown";
@@ -174,13 +175,11 @@ const ProjectChat = ({ id, chat }: ProjectChatProps) => {
             )}
           </form>
           <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
-            <Button variant="ghost" size="sm">
-              <UploadCloud className="mr-1 h-4 w-4" />
-              Upload File
-            </Button>
-            <Button variant="ghost" size="sm">
-              <RotateCcw className="mr-1 h-4 w-4" />
-              Clear Chat
+            <Button variant="ghost" size="sm" asChild>
+              <Link href={`/p/${projectId}/chat/${crypto.randomUUID().toString()}`}>
+                <RotateCcw className="mr-1 h-4 w-4" />
+                Clear Chat
+              </Link>
             </Button>
           </div>
         </div>

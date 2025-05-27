@@ -44,11 +44,12 @@ export const projects = pgTable("projects", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
   description: text("description").notNull(),
-
+  systemPrompt: text("system_prompt"),
+  temperature: integer("temperature").default(7),
+  maxTokens: integer("max_tokens").default(2000),
   userId: text("user_id")
     .references(() => users.id, { onDelete: "cascade" })
     .notNull(),
-
   ...timestamps,
 });
 
