@@ -66,13 +66,14 @@ async function getChats(projectId: string, searchQuery?: string) {
   });
 }
 
-export default async function ConversationHistory({
-  params,
-  searchParams,
-}: {
-  params: { projectId: string };
-  searchParams: { q?: string };
-}) {
+export default async function ConversationHistory(
+  props: {
+    params: Promise<{ projectId: string }>;
+    searchParams: Promise<{ q?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const stats = await getChatStats(params.projectId);
   const conversations = await getChats(params.projectId, searchParams.q);
 
