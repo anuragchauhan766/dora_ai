@@ -11,6 +11,7 @@ import { NavProjectsSection } from "@/components/siderbar/NavbarProjectsSection"
 import { UserButton } from "@clerk/nextjs";
 import { HelpCircle, MessageSquare } from "lucide-react";
 import { getProjects } from "@/actions/project/getProject";
+import { ThemeToggle } from "@/components/common/themeToggle";
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const projects = await getProjects();
@@ -38,6 +39,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <HelpCircle className="h-5 w-5" />
                 <span className="sr-only">Help</span>
               </Button>
+              <ThemeToggle />
               <UserButton
                 appearance={{
                   elements: {
@@ -47,7 +49,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               />
             </div>
           </header>
-          <main className="flex-1">{children}</main>
+          <div className="flex-1">{children}</div>
         </SidebarInset>
       </SidebarProvider>
     </div>

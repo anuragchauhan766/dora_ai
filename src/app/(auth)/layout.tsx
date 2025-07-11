@@ -1,4 +1,3 @@
-import { ClerkProvider } from "@clerk/nextjs";
 import { Bot } from "lucide-react";
 import { Inter } from "next/font/google";
 import Link from "next/link";
@@ -6,6 +5,7 @@ import "../globals.css";
 const inter = Inter({ subsets: ["latin"] });
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { Providers } from "@/providers";
 export const metadata = {
   title: "AI SaaS Platform",
   description: "Train AI models with your own data and chat with them",
@@ -13,9 +13,9 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider>
-      <html lang="en">
-        <body className={inter.className}>
+    <html lang="en">
+      <body className={inter.className}>
+        <Providers>
           <div className="flex min-h-screen flex-col">
             <header className="flex h-14 items-center px-4 lg:px-6">
               <Link className="flex items-center justify-center" href="/">
@@ -61,8 +61,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             theme="dark"
             stacked
           />
-        </body>
-      </html>
-    </ClerkProvider>
+        </Providers>
+      </body>
+    </html>
   );
 }

@@ -87,7 +87,7 @@ const ProjectChat = ({ id, chat }: ProjectChatProps) => {
           </div>
         ) : (
           <ScrollArea className="h-full w-full px-2 sm:px-0">
-            <div className="mx-auto flex max-w-screen-lg flex-col gap-2 py-6">
+            <div className="mx-auto flex max-w-(--breakpoint-lg) flex-col gap-2 py-6">
               {messages.map((message, idx) => {
                 const isUser = message.role === "user";
                 return (
@@ -97,7 +97,7 @@ const ProjectChat = ({ id, chat }: ProjectChatProps) => {
                   >
                     {/* Assistant Avatar */}
                     {!isUser && (
-                      <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary text-white">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-white">
                         <Bot className="h-5 w-5" />
                       </div>
                     )}
@@ -105,7 +105,7 @@ const ProjectChat = ({ id, chat }: ProjectChatProps) => {
                       {/* Message Bubble */}
                       <div
                         className={cn(
-                          "relative max-w-[80vw] break-words rounded-3xl px-4 py-3 text-base shadow-sm sm:max-w-[80%]",
+                          "relative max-w-[80vw] break-words rounded-3xl px-4 py-3 text-base shadow-xs sm:max-w-[80%]",
                           isUser
                             ? "ml-8 bg-primary text-primary-foreground sm:ml-12"
                             : "mr-8 rounded-tl-md border border-gray-200 bg-white text-black sm:mr-12"
@@ -153,7 +153,7 @@ const ProjectChat = ({ id, chat }: ProjectChatProps) => {
       </div>
       {/* Input Area */}
       <div className="sticky bottom-0 z-10 w-full bg-background p-4">
-        <div className="mx-auto max-w-screen-lg">
+        <div className="mx-auto max-w-(--breakpoint-lg)">
           <form className="flex items-end gap-2" onSubmit={handleSubmit}>
             <div className="flex-1">
               <Input

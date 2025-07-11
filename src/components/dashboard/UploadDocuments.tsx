@@ -69,11 +69,11 @@ export function UploadDocuments() {
     <Card className="mb-4">
       <CardContent className="p-4">
         <div className="mb-4 flex gap-4">
-          <Button variant={urlMode ? "outline" : "default"} onClick={() => setUrlMode(false)} className="flex-1">
+          <Button variant={urlMode ? "outline-solid" : "default"} onClick={() => setUrlMode(false)} className="flex-1">
             <UploadCloud className="mr-2 h-4 w-4" />
             Upload Files
           </Button>
-          <Button variant={urlMode ? "default" : "outline"} onClick={() => setUrlMode(true)} className="flex-1">
+          <Button variant={urlMode ? "default" : "outline-solid"} onClick={() => setUrlMode(true)} className="flex-1">
             <LinkIcon className="mr-2 h-4 w-4" />
             Add URL
           </Button>
