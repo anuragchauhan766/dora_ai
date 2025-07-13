@@ -4,12 +4,24 @@ import { NextResponse } from "next/server";
 const isPublicRoute = createRouteMatcher(["/signin(.*)", "/signup(.*)", "/", "/api/webhooks(.*)"]);
 
 export default clerkMiddleware(async (auth, request) => {
-  const { userId } = await auth();
+  const { userId, orgId } = await auth();
   if (request.nextUrl.pathname === "/" && userId) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
   if (!isPublicRoute(request)) {
     await auth.protect();
+  }
+  if (
+    userId &&
+    !orgId &&
+    request.nextUrl.pathname.startsWith("/org") &&
+    request.nextUrl.pathname !== "/org-selection"
+  ) {
+    const searchParams = new URLSearchParams({ redirectUrl: request.url });
+
+    const orgSelection = new URL(`/org-selection?${searchParams.toString()}`, request.url);
+
+    return NextResponse.redirect(orgSelection);
   }
 });
 

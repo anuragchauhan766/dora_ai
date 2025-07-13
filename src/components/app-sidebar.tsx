@@ -23,7 +23,7 @@ export function AppSidebar({ children, ...props }: React.ComponentProps<typeof S
               className="bg-transparent p-0 hover:bg-transparent focus:bg-transparent active:bg-transparent data-[active=true]:bg-transparent"
             >
               <div>
-                <OrganizationSwitcher />
+                <OrganizationSwitcher hidePersonal={true} />
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>

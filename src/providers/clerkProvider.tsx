@@ -4,6 +4,13 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
 import { useTheme } from "next-themes";
 
+import { useSession } from "@clerk/nextjs";
+
+function MultisessionAppSupport({ children }: { children: React.ReactNode }) {
+  const { session } = useSession();
+
+  return <React.Fragment key={session ? session.id : "no-users"}>{children}</React.Fragment>;
+}
 export const ClerkProviderComponent = ({ children }: { children: React.ReactNode }) => {
   const { theme } = useTheme();
   return (
@@ -50,7 +57,7 @@ export const ClerkProviderComponent = ({ children }: { children: React.ReactNode
         },
       }}
     >
-      {children}
+      <MultisessionAppSupport>{children}</MultisessionAppSupport>
     </ClerkProvider>
   );
 };

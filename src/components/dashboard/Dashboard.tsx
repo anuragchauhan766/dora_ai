@@ -24,7 +24,7 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
       <h1 className="mb-6 text-3xl font-bold">Your Knowledgebases</h1>
       <div className="mb-6 flex items-center justify-between">
         <div className="relative w-64">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="text-muted-foreground absolute top-2.5 left-2 h-4 w-4" />
           <Input
             placeholder="Search knowledgebases"
             className="pl-8"

@@ -1,19 +1,24 @@
+import { SyncActiveOrganization } from "@/lib/utils/sync-active-organization";
+import { auth } from "@clerk/nextjs/server";
+import { type PropsWithChildren } from "react";
+
 import BreadcrumbCustom from "@/components/header/Breadcrumb";
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
+import { getProjects } from "@/actions/project/getProject";
 import { AppSidebar } from "@/components/app-sidebar";
+import { ThemeToggle } from "@/components/common/themeToggle";
 import { NavMain } from "@/components/nav-main";
 import { NavSecondary } from "@/components/nav-secondary";
 import { NavProjectsSection } from "@/components/siderbar/NavbarProjectsSection";
 import { UserButton } from "@clerk/nextjs";
 import { HelpCircle, MessageSquare } from "lucide-react";
-import { getProjects } from "@/actions/project/getProject";
-import { ThemeToggle } from "@/components/common/themeToggle";
+import { redirect } from "next/navigation";
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
+async function OrganizationLayoutWithSidebar({ children }: { children: React.ReactNode }) {
   const projects = await getProjects();
   return (
     <div className="flex min-h-screen flex-col">
@@ -54,4 +59,18 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </SidebarProvider>
     </div>
   );
+}
+
+export default async function OrganizationLayout(props: PropsWithChildren) {
+  const { orgId } = await auth();
+
+  if (orgId) {
+    return (
+      <OrganizationLayoutWithSidebar>
+        <SyncActiveOrganization />
+        {props.children}
+      </OrganizationLayoutWithSidebar>
+    );
+  }
+  return redirect("/org-selection");
 }

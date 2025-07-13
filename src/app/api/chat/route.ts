@@ -50,7 +50,6 @@ export async function POST(req: Request) {
           content: (response.messages[response.messages.length - 1].content[0] as TextPart).text,
         },
       });
-
     },
     experimental_generateMessageId: () => crypto.randomUUID().toString(),
     tools: {
